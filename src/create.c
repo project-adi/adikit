@@ -7,7 +7,6 @@
 #include <sys/stat.h>
 
 bool create(char* directory) {
-
     if (directory == NULL) {
         return false;
     }
@@ -46,7 +45,18 @@ bool create(char* directory) {
         printf("Failed to create file: %s\n", drvdesc);
         return false;
     }
-    fprintf(file, "This is a driver for %s\n", directory);
+    fprintf(file,"name: Lonely Driver\n");
+    fprintf(file,"author: Lolguy91\n");
+    fprintf(file,"#cross-arch: aarch64\n");
+    fprintf(file,"regions:\n");
+    fprintf(file,"\tmain:\n");
+    fprintf(file,"\t\tpermissions: low\n");
+    fprintf(file,"\trequire_kernel: false\n");
+    fprintf(file,"\tsrc_dir: src\n");
+    fprintf(file,"\tuses:\n");
+    fprintf(file,"\t\t\t- x86\n");
+    fprintf(file,"\t\timplements:\n");
+    fprintf(file,"\t\t\t- timekeeper");
     fclose(file);
 
     return true;
