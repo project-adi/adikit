@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <math.h>
 #include <string.h>
 
 
@@ -20,6 +22,10 @@ char** metalangs_used;
 
 bool parse_config(char* drvdesc) {
     char* line = drvdesc;
+    uint8_t impl_counter = 0;
+    metalangs_used = (char**)malloc(sizeof(char*));
+    uint8_t used_counter = 0;
+    metalangs_implemented = (char**)malloc(sizeof(char*));
 
     while (1) {
         char* tonull = strchr(line, '\n');
@@ -64,9 +70,19 @@ bool parse_config(char* drvdesc) {
         } else if (strncmp("src_dir: ", line, 9) == 0) {
             src_dir = strdup(line + 9);
         } else if (strncmp("implements: ", line, 11) == 0) {
-            //metalangs_implemented = strdup(line + 11);
+            impl_counter = 1;
         } else if (strncmp("uses: ", line, 6) == 0) {
-            //metalangs_used = strdup(line + 6);
+            used_counter = 1;
+        } else if (strncmp("    ", line, 4) == 0 || strncmp("  ", line, 2) == 0 || strncmp("\t", line, 1) == 0) {
+            if (impl_counter > 0) {
+                metalangs_implemented[impl_counter - 1] = strdup(line + 2);
+                impl_counter++;
+                metalangs_implemented = (char**)realloc(metalangs_implemented, sizeof(char*) * impl_counter);
+            } else if (used_counter > 0) {
+                metalangs_used[used_counter - 1] = strdup(line + 2);
+                used_counter++;
+                metalangs_used = (char**)realloc(metalangs_used, sizeof(char*) * used_counter);
+            }
         }
 
         next_line:
@@ -87,12 +103,30 @@ bool parse_config(char* drvdesc) {
         cross_arch = "x86_64-pc-none-elf";
     }
 
+    if(impl_counter == 0) {
+        impl_counter = 1;
+    }
+
+    if(used_counter == 0) {
+        used_counter = 1;
+    }
+
+    metalangs_implemented[impl_counter - 1] = NULL;
+    metalangs_used[used_counter - 1] = NULL;
+
     printf("name: %s\n", name);
     printf("author: %s\n", author);
     printf("cross-arch: %s\n", cross_arch);
     printf("permissions: %d\n", permissions);
     printf("require_kernel: %s\n", require_kernel ? "true" : "false");
     printf("src_dir: %s\n", src_dir);
+    for(int i = 0; metalangs_implemented[i] != NULL; i++) {
+        printf("  -implements \"%s\"\n", metalangs_implemented[i]);
+    }
+
+    for(int i = 0; metalangs_used[i] != NULL; i++) {
+        printf("  -uses \"%s\"\n", metalangs_used[i]);
+    }
 
     return true;
 }

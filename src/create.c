@@ -86,7 +86,7 @@ bool create(char* directory) {
     fprintf(file,"#require_kernel: false\n");
     fprintf(file,"src_dir: src\n");
     fprintf(file,"implements:\n");
-    fprintf(file,"\t- misc_storage\n");
+    fprintf(file,"\t-misc_storage\n");
     fclose(file);
 
     return true;
