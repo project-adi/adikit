@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "config.h"
+#include "convert.h"
 
 char** src_files;
 uint8_t src_files_counter = 0;
@@ -179,12 +180,41 @@ bool build(char* directory) {
         strcat(link_cmd, obj_files[i]);
         strcat(link_cmd, " ");
     }
-    strcat(link_cmd, " -o ");
+    strcat(link_cmd, " -E -o ");
     strcat(link_cmd, bindir);
     strcat(link_cmd, "/driver.elf");
 
     if(system(link_cmd) != 0) {
         printf( "ERROR: Failed to link\n");
+        goto error;
+    }
+
+    char driver_elf[1024];
+    strcpy(driver_elf, bindir);
+    strcat(driver_elf, "/driver.elf");
+
+    if(!convert(driver_elf)) {
+        printf("ERROR: Failed to convert driver.elf\n");
+        goto error;
+    }
+
+    driver_elf[strlen(driver_elf) - 3] = '\0';
+    strcat(driver_elf, "adi");
+
+
+    char output_adi[1024];
+    strcpy(output_adi, directory);
+    strcat(output_adi, "/output.adi");
+
+    if(access(output_adi, F_OK) == 0) {
+        if(remove(output_adi) != 0) {
+            printf("ERROR: Failed to remove output.adi\n");
+            goto error;
+        }
+    }
+
+    if(rename(driver_elf, output_adi) != 0) {
+        printf("ERROR: Failed to rename driver.adi to output.adi\n");
         goto error;
     }
 

@@ -2,7 +2,7 @@ CC=clang
 LD=clang
 
 CFLAGS=-Isrc -g -Werror
-LDFLAGS= -lm
+LDFLAGS= -lm -lelf
 
 SRC=$(wildcard src/*.c)
 _OBJ=$(SRC:.c=.o)

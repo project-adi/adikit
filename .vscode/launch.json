@@ -10,7 +10,10 @@
             "request": "launch",
             "target": "./bin/adikit",
             "cwd": "${workspaceRoot}",
-             "arguments": "build test",
+            "arguments": "build test",
+            "env": {
+                "LIBADI_PATH": "libadi"
+            },
             "valuesFormatting": "parseText"
         }
     ]

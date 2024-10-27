@@ -6,17 +6,19 @@
 #include <math.h>
 #include <string.h>
 
-
 char* name;
-uint8_t name_len;
+uint8_t name_len = 0;
 char* author;
-uint8_t author_len;
+uint8_t author_len = 0;
 char* cross_arch;
-uint8_t cross_arch_len;
-driver_perms_t permissions;
-bool require_kernel;
+uint8_t cross_arch_len = 0;
+driver_perms_t permissions = {0};
+bool require_kernel = false;
+uint8_t ver_major = 0;
+uint8_t ver_minor = 0;
+uint8_t ver_patch = 0;
 char* src_dir;
-uint8_t src_dir_len;
+uint8_t src_dir_len = 0;
 char** metalangs_implemented;
 char** metalangs_used;
 
@@ -69,6 +71,17 @@ bool parse_config(char* drvdesc) {
             }
         } else if (strncmp("src_dir: ", line, 9) == 0) {
             src_dir = strdup(line + 9);
+        } else if (strncmp("version: ", line, 9) == 0) {
+            char* verstr = strchr(line + 9, 'v') + 1;
+            if (verstr == NULL) {
+                printf("ERROR: Failed to parse version string\n");
+                return false;
+            }
+
+            if (sscanf(verstr, "%hhu.%hhu.%hhu", &ver_major, &ver_minor, &ver_patch) != 3) {
+                printf("ERROR: Failed to parse version string\n");
+                return false;
+            }
         } else if (strncmp("implements: ", line, 11) == 0) {
             impl_counter = 1;
         } else if (strncmp("uses: ", line, 6) == 0) {
