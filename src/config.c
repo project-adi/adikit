@@ -100,7 +100,7 @@ bool parse_config(char* drvdesc) {
     }
 
     if (cross_arch == NULL) {
-        cross_arch = "x86_64-pc-none-elf";
+        cross_arch = strdup("x86_64-pc-none-elf");
     }
 
     if(impl_counter == 0) {
@@ -113,20 +113,6 @@ bool parse_config(char* drvdesc) {
 
     metalangs_implemented[impl_counter - 1] = NULL;
     metalangs_used[used_counter - 1] = NULL;
-
-    printf("name: %s\n", name);
-    printf("author: %s\n", author);
-    printf("cross-arch: %s\n", cross_arch);
-    printf("permissions: %d\n", permissions);
-    printf("require_kernel: %s\n", require_kernel ? "true" : "false");
-    printf("src_dir: %s\n", src_dir);
-    for(int i = 0; metalangs_implemented[i] != NULL; i++) {
-        printf("  -implements \"%s\"\n", metalangs_implemented[i]);
-    }
-
-    for(int i = 0; metalangs_used[i] != NULL; i++) {
-        printf("  -uses \"%s\"\n", metalangs_used[i]);
-    }
 
     return true;
 }
