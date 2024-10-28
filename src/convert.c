@@ -85,7 +85,7 @@ bool prepare_string_table(){
 
     return true;
 }
-
+ 
 bool append_metalang(Elf* elf, char* metalang){
     adi_ff_metalang_t mlang = (adi_ff_metalang_t){
         .id = htole32(get_metalang_id(metalang)),

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <endian.h>
 
-#define ADI_FF_MAGIC le64toh(0x414449204B4F4F4C)
+#define ADI_FF_MAGIC 0x4C4F4F4B20494441
 
 #define ADI_FF_SEGMENT_FLAG_EXEC      1 >> 0
 #define ADI_FF_SEGMENT_FLAG_WRITE     1 >> 1
