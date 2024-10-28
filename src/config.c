@@ -22,6 +22,9 @@ uint8_t src_dir_len = 0;
 char** metalangs_implemented;
 char** metalangs_used;
 
+//TODO: make the desired ADI version actually specifiable
+uint16_t adi_version = 1;
+
 bool parse_config(char* drvdesc) {
     char* line = drvdesc;
     uint8_t impl_counter = 0;

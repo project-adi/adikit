@@ -19,11 +19,11 @@ char* string_table = NULL;
 uint32_t string_table_size = 0;
 char* metalang_table = NULL;
 uint32_t metalang_table_size = 0;
-char* section_table = NULL;
-uint32_t section_table_size = 0;
+char* segment_table = NULL;
+uint32_t segment_table_size = 0;
 
-char* section_contents = NULL;
-uint32_t section_contents_size = 0;
+char* segment_contents = NULL;
+uint32_t segment_contents_size = 0;
 
 uintptr_t get_symbol_address(Elf* elf, char* symbol_name){
     size_t shstrndx;
@@ -32,7 +32,7 @@ uintptr_t get_symbol_address(Elf* elf, char* symbol_name){
         return 0;
     }
 
-    // Iterate through sections to find the symbol table
+    // Iterate through segments to find the symbol table
     Elf_Scn *scn = NULL;
     while ((scn = elf_nextscn(elf, scn)) != NULL) {
         GElf_Shdr shdr;
@@ -41,7 +41,7 @@ uintptr_t get_symbol_address(Elf* elf, char* symbol_name){
             continue;
         }
 
-        // Check if the section is a symbol table
+        // Check if the segment is a symbol table
         if (shdr.sh_type == SHT_SYMTAB || shdr.sh_type == SHT_DYNSYM) {
             Elf_Data *data = elf_getdata(scn, NULL);
             if (!data) {
@@ -82,7 +82,6 @@ bool prepare_string_table(){
 
     header.name_offset = 0;
     header.author_offset = htole16(strlen(name) + 1);
-    header.string_table_offset = htole32(sizeof(header));
 
     return true;
 }
@@ -92,9 +91,6 @@ bool append_metalang(Elf* elf, char* metalang){
         .id = htole32(get_metalang_id(metalang)),
         .pointer_addr = htole64(get_symbol_address(elf, metalang)),
     };
-
-    memcpy(metalang_table + metalang_table_size - sizeof(mlang), &mlang, sizeof(mlang));
-
     metalang_table_size += sizeof(mlang);
     metalang_table = (char*)realloc(metalang_table, metalang_table_size);
     if(metalang_table == NULL){
@@ -102,12 +98,14 @@ bool append_metalang(Elf* elf, char* metalang){
         return false;
     }
 
+
+    memcpy(metalang_table + metalang_table_size - sizeof(mlang), &mlang, sizeof(mlang));
+
     return true;
 }
 
 bool prepare_metalang_table(Elf* elf){
-    metalang_table_size = sizeof(adi_ff_metalang_t);
-    metalang_table = (char*)malloc(metalang_table_size);
+    metalang_table_size = 0;
 
     for(int i = 0; metalangs_used[i]; i++){
         append_metalang(elf,metalangs_used[i]);
@@ -120,14 +118,14 @@ bool prepare_metalang_table(Elf* elf){
     return true;
 }
 
-bool append_section(Elf* elf, Elf_Scn* scn,size_t shstrndx){
+bool append_segment(Elf* elf, Elf_Scn* scn,size_t shstrndx){
     GElf_Shdr shdr;
     if (gelf_getshdr(scn, &shdr) != &shdr) {
         fprintf(stderr, "gelf_getshdr failed: %s\n", elf_errmsg(-1));
         return false;
     }
 
-    //get the section name
+    //get the segment name
     const char *name = elf_strptr(elf, shstrndx, shdr.sh_name);
 
     if(strcmp(name, ".comment") == 0 || strcmp(name, ".strtab") == 0 || strcmp(name, ".shstrtab") == 0){
@@ -143,9 +141,6 @@ bool append_section(Elf* elf, Elf_Scn* scn,size_t shstrndx){
     strcpy(string_table + string_table_size - strlen(name) - 1, name);
     string_table[string_table_size - 1] = '\0';
 
-    header.metalang_table_offset = htole32(le32toh(header.metalang_table_offset) + strlen(name) + 1);
-    header.segment_table_offset = htole32(le32toh(header.segment_table_offset) + strlen(name) + 1);
-
     Elf_Data *data = elf_getdata(scn, NULL);
     if (data == NULL) {
         fprintf(stderr, "elf_getdata failed: %s\n", elf_errmsg(-1));
@@ -154,25 +149,25 @@ bool append_section(Elf* elf, Elf_Scn* scn,size_t shstrndx){
 
     uint8_t flags = 0;
     if (shdr.sh_flags & SHF_EXECINSTR) {
-        flags |= ADI_FF_SECTION_FLAG_EXEC;
+        flags |= ADI_FF_SEGMENT_FLAG_EXEC;
     }
     if (shdr.sh_flags & SHF_WRITE) {
-        flags |= ADI_FF_SECTION_FLAG_WRITE;
+        flags |= ADI_FF_SEGMENT_FLAG_WRITE;
     }
     if (shdr.sh_flags & SHF_ALLOC) {
-        flags |= ADI_FF_SECTION_FLAG_READ;
+        flags |= ADI_FF_SEGMENT_FLAG_READ;
     }
     if (data->d_buf != NULL) {
-        flags |= ADI_FF_SECTION_FLAG_INFILE;
+        flags |= ADI_FF_SEGMENT_FLAG_INFILE;
     }
     if(permissions & PERMS_PAGING){
-        flags |= ADI_FF_SECTION_FLAG_PAGING;
+        flags |= ADI_FF_SEGMENT_FLAG_PAGING;
     }
     if (permissions & PERMS_METADRIVER) {
-        flags |= ADI_FF_SECTION_FLAG_META;
+        flags |= ADI_FF_SEGMENT_FLAG_META;
     }
     if(permissions & PERMS_USERSPACE){
-        flags |= ADI_FF_SECTION_FLAG_USERSPACE;
+        flags |= ADI_FF_SEGMENT_FLAG_USERSPACE;
     }
 
     adi_ff_segment_t seg = (adi_ff_segment_t){
@@ -180,28 +175,33 @@ bool append_section(Elf* elf, Elf_Scn* scn,size_t shstrndx){
         .flags = flags,
         .segment_offset = 0,
         .segment_size = htole32(shdr.sh_size),
+        .virt_addr = htole64(shdr.sh_addr),
     };
     if(data->d_buf != NULL){
-        seg.segment_offset = htole32(section_contents_size);
+        seg.segment_offset = htole32(segment_contents_size);
 
-        section_contents_size += shdr.sh_size;
-        section_contents = (char*)realloc(section_contents, section_contents_size);
-        if(section_contents == NULL){
+        segment_contents_size += shdr.sh_size;
+        segment_contents = (char*)realloc(segment_contents, segment_contents_size);
+        if(segment_contents == NULL){
             printf("ERROR: Failed to allocate memory\n");
             return false;
         }
-        memcpy(section_contents + section_contents_size - shdr.sh_size, data->d_buf, shdr.sh_size);
+        memcpy(segment_contents + segment_contents_size - shdr.sh_size, data->d_buf, shdr.sh_size);
     }
 
-    printf("Section: %s\n", name);
+    segment_table_size += sizeof(seg);
+    segment_table = (char*)realloc(segment_table, segment_table_size);
+    if(segment_table == NULL){
+        printf("ERROR: Failed to allocate memory\n");
+        return false;
+    }
+    memcpy(segment_table + segment_table_size - sizeof(seg), &seg, sizeof(seg));
 
     return true;
 }
 
-bool prepare_section_table(Elf* elf){
-
-    header.segment_table_offset = header.metalang_table_offset + metalang_table_size;
-    section_table_size = 0;
+bool prepare_segment_table(Elf* elf){
+    segment_table_size = 0;
 
     size_t shstrndx;
     if (elf_getshdrstrndx(elf, &shstrndx) != 0) {
@@ -209,9 +209,9 @@ bool prepare_section_table(Elf* elf){
         return false;
     }
 
-    // Iterate over all sections
+    // Iterate over all segments
     Elf_Scn *scn = NULL;
-    int section_index = 0;
+    int segment_index = 0;
     while ((scn = elf_nextscn(elf, scn)) != NULL) {
         GElf_Shdr shdr;
         if (gelf_getshdr(scn, &shdr) != &shdr) {
@@ -219,17 +219,17 @@ bool prepare_section_table(Elf* elf){
             continue;
         }
 
-        // Get section name
-        const char *section_name = elf_strptr(elf, shstrndx, shdr.sh_name);
-        if (!section_name) {
+        // Get segment name
+        const char *segment_name = elf_strptr(elf, shstrndx, shdr.sh_name);
+        if (!segment_name) {
             fprintf(stderr, "elf_strptr failed: %s\n", elf_errmsg(-1));
-            section_name = "<unknown>";
+            segment_name = "<unknown>";
         }
 
-        if(!append_section(elf, scn, shstrndx)){
+        if(!append_segment(elf, scn, shstrndx)){
             return false;
         }
-        section_index++;
+        segment_index++;
     }
 
     return true;
@@ -270,30 +270,21 @@ bool convert(char* driver_elf)
 
     header.magic_num = ADI_FF_MAGIC;
 
-    header.version = (typeof(header.version)) {
-        .major = ver_major,
-        .minor = ver_minor,
-        .patch = ver_patch
-    };
+    header.ver_major = ver_major;
+    header.ver_minor = ver_minor;
+    header.ver_patch = ver_patch;
 
     header.cfr_addr = htole64(get_symbol_address(elf, "core"));
+    header.spec_version = htole16(adi_version);
 
-    if(gelf_getclass(elf) == ELFCLASS32) {
-        Elf32_Ehdr *ehdr = elf32_getehdr(elf);
-        if(ehdr == NULL) {
-            goto error;
-        }
-        header.entry_point = htole32(ehdr->e_entry);
-        header.ISA = htole16(ehdr->e_machine);
-    }else if(gelf_getclass(elf) == ELFCLASS64) {
+    if(gelf_getclass(elf) == ELFCLASS64) {
         Elf64_Ehdr *ehdr = elf64_getehdr(elf);
         if(ehdr == NULL) {
             goto error;
         }
         header.entry_point = htole64(ehdr->e_entry);
-        header.ISA = htole16(ehdr->e_machine);
     }else {
-        printf("ERROR: ELF class not supported\n");
+        printf("ERROR: ELF class not supported(no 32-bit support rn)\n");
         goto error;
     }
 
@@ -303,16 +294,25 @@ bool convert(char* driver_elf)
     if(!prepare_metalang_table(elf)) {
         goto error;
     }
-    if(!prepare_section_table(elf)){
+    if(!prepare_segment_table(elf)){
         goto error;
     }
+
+    header.string_table_offset = htole32(sizeof(header));
+    header.metalang_table_offset = htole32(header.string_table_offset + string_table_size);
+    header.segment_table_offset = htole32(header.metalang_table_offset + metalang_table_size);
+    header.content_region_offset = htole32(header.segment_table_offset + segment_table_size);
+
+    header.metalang_table_size = htole32(metalang_table_size);
+    header.string_table_size = htole32(string_table_size);
+    header.segment_table_size = htole32(segment_table_size);
 
 
     fwrite(&header, sizeof(header), 1, driver_adi_file);
     fwrite(string_table, string_table_size, 1, driver_adi_file);
     fwrite(metalang_table, metalang_table_size, 1, driver_adi_file);
-    fwrite(section_table, section_table_size, 1, driver_adi_file);
-    fwrite(section_contents, section_contents_size, 1, driver_adi_file);
+    fwrite(segment_table, segment_table_size, 1, driver_adi_file);
+    fwrite(segment_contents, segment_contents_size, 1, driver_adi_file);
 
 
     cleanup:

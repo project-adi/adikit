@@ -23,6 +23,8 @@ extern char* src_dir;
 extern char** metalangs_implemented;
 extern char** metalangs_used;
 
+extern uint16_t adi_version;
+
 bool parse_config(char* drvdesc);
 
 #endif // __CONFIG_H__
