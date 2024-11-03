@@ -70,6 +70,7 @@ fprintf(file,"\n");
 fprintf(file,"int _start() {\n");
 fprintf(file,"	metalanguage_t langs[] = {misc_storage->new(storage_ident_callback,storage_transact_callback)};\n");
 fprintf(file,"	device_id = core->register_device(langs,1);\n");
+fprintf(file,"	exit(true);\n");
 fprintf(file,"	return 0;\n");
 fprintf(file,"}\n");
 
