@@ -17,7 +17,7 @@ typedef uint32_t (*event_transact)(adi_device_t* dev,bool write,uint32_t offset,
 
 typedef struct {
     metalanguage_t (*new)(event_identify identify,event_transact transact);
-    void (*signal_transaction_done)(adi_device_t* dev, uint32_t id);
+    bool (*signal_transaction_done)(adi_device_t* dev, uint32_t id);
 
 } metalang_storage_t;
 

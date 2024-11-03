@@ -26,6 +26,7 @@ typedef struct {
     void (*log_warning)(char* format,...);
     void (*log_error)(char* format,...);
     void (*panic)(char* format,...);
+    void (*exit)(bool success);
 
     //Device API
     uint32_t (*register_device)(metalanguage_t* metalanguages_implemented,uint32_t metalanguage_count);
