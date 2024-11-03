@@ -1,0 +1,3 @@
+[submodule "libadi"]
+	path = libadi
+	url = https://github.com/project-adi/libadi
