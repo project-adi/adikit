@@ -180,7 +180,11 @@ bool build(char* directory) {
         strcat(link_cmd, obj_files[i]);
         strcat(link_cmd, " ");
     }
-    strcat(link_cmd, " -E -o ");
+    strcat(link_cmd, " -T ");
+    strcat(link_cmd, directory);
+    strcat(link_cmd, "/linker.ld");
+
+    strcat(link_cmd, " -o ");
     strcat(link_cmd, bindir);
     strcat(link_cmd, "/driver.elf");
 

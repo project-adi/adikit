@@ -14,7 +14,7 @@ char* cross_arch;
 uint8_t cross_arch_len = 0;
 driver_perms_t permissions = {0};
 bool require_kernel = false;
-uint8_t ver_major = 0;
+uint8_t ver_major = 1;
 uint8_t ver_minor = 0;
 uint8_t ver_patch = 0;
 char* src_dir;

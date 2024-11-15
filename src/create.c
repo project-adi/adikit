@@ -31,54 +31,55 @@ bool create(char* directory) {
         return false;
     }
 
-fprintf(file,"#include <stdint.h>\n");
-fprintf(file,"#include <stdbool.h>\n");
-fprintf(file,"#include <core.h>\n");
-fprintf(file,"#include <metalanguages/misc/storage.h>\n");
-fprintf(file,"\n");
-fprintf(file,"adi_core_t* core;\n");
-fprintf(file,"\n");
-fprintf(file,"metalang_storage_t* misc_storage;\n");
-fprintf(file,"uint32_t device_id = 0;\n");
-fprintf(file,"\n");
-fprintf(file,"sdev_ident_t storage_ident_callback(adi_device_t* dev) {\n");
-fprintf(file,"	return (sdev_ident_t){\n");
-fprintf(file,"		.size = sizeof(\"Hello, world!\"),\n");
-fprintf(file,"		.sector_size = 1,\n");
-fprintf(file,"		.read_only = true\n");
-fprintf(file,"	};\n");
-fprintf(file,"}\n");
-fprintf(file,"\n");
-fprintf(file,"uint32_t storage_transact_callback(adi_device_t* dev,bool write,uint32_t offset,uint32_t count,void* buffer){\n");
-fprintf(file,"\n");
-fprintf(file,"	if(write)\n");
-fprintf(file,"		return 0;\n");
-fprintf(file,"	if (offset + count > sizeof(\"Hello, world!\"))\n");
-fprintf(file,"		return 0;\n");
-fprintf(file,"\n");
-fprintf(file,"	char* hw = \"Hello, world!\";\n");
-fprintf(file,"\n");
-fprintf(file,"	core->memcpy(buffer, hw + offset,count);\n");
-fprintf(file,"\n");
-fprintf(file,"	// recieving the transaction_done event before the storage_transact call finishing is a perfectly normal scenario\n");
-fprintf(file,"	// and programs should account for it\n");
-fprintf(file,"	misc_storage->signal_transaction_done(dev->metalangs_implemented[0]->params,1);\n");
-fprintf(file,"\n");
-fprintf(file,"	return 1;\n");
-fprintf(file,"}\n");
-fprintf(file,"\n");
-fprintf(file,"int _start() {\n");
-fprintf(file,"	metalanguage_t langs[] = {misc_storage->new(storage_ident_callback,storage_transact_callback)};\n");
-fprintf(file,"	device_id = core->register_device(langs,1);\n");
-fprintf(file,"	exit(true);\n");
-fprintf(file,"	return 0;\n");
-fprintf(file,"}\n");
-
+    fprintf(file,"#include <stdint.h>\n");
+    fprintf(file,"#include <stdbool.h>\n");
+    fprintf(file,"#include <core.h>\n");
+    fprintf(file,"#include <metalanguages/misc/storage.h>\n");
+    fprintf(file,"\n");
+    fprintf(file,"adi_core_t* core;\n");
+    fprintf(file,"\n");
+    fprintf(file,"metalang_storage_t* misc_storage;\n");
+    fprintf(file,"uint32_t device_id = 0;\n");
+    fprintf(file,"\n");
+    fprintf(file,"sdev_ident_t storage_ident_callback(adi_device_t* dev) {\n");
+    fprintf(file,"	return (sdev_ident_t){\n");
+    fprintf(file,"		.size = sizeof(\"Hello, world!\"),\n");
+    fprintf(file,"		.sector_size = 1,\n");
+    fprintf(file,"		.read_only = true\n");
+    fprintf(file,"	};\n");
+    fprintf(file,"}\n");
+    fprintf(file,"\n");
+    fprintf(file,"uint32_t storage_transact_callback(adi_device_t* dev,bool write,uint32_t offset,uint32_t count,void* buffer){\n");
+    fprintf(file,"\n");
+    fprintf(file,"	if(write)\n");
+    fprintf(file,"		return 0;\n");
+    fprintf(file,"	if (offset + count > sizeof(\"Hello, world!\"))\n");
+    fprintf(file,"		return 0;\n");
+    fprintf(file,"\n");
+    fprintf(file,"	char* hw = \"Hello, world!\";\n");
+    fprintf(file,"\n");
+    fprintf(file,"	core->memcpy(buffer, hw + offset,count);\n");
+    fprintf(file,"\n");
+    fprintf(file,"	// recieving the transaction_done event before the storage_transact call finishing is a perfectly normal scenario\n");
+    fprintf(file,"	// and programs should account for it\n");
+    fprintf(file,"	misc_storage->signal_transaction_done(dev->metalangs_implemented[0]->params,1);\n");
+    fprintf(file,"\n");
+    fprintf(file,"	return 1;\n");
+    fprintf(file,"}\n");
+    fprintf(file,"\n");
+    fprintf(file,"int _start() {\n");
+    fprintf(file,"	metalanguage_t langs[] = {misc_storage->new(storage_ident_callback,storage_transact_callback)};\n");
+    fprintf(file,"	device_id = core->register_device(langs,1);\n");
+    fprintf(file,"	core->exit(true);\n");
+    fprintf(file,"	return 0;\n");
+    fprintf(file,"}\n");
 
     fclose(file);
 
     //create a file in directory named "drvdesc"
-    char* drvdesc = strcat(directory, "/.drvdesc");
+    char drvdesc[256];
+    strcpy(drvdesc, directory);
+    strcat(drvdesc, "/.drvdesc");
     file = fopen(drvdesc, "w+");
     if(file == NULL) {
         printf("Failed to create file: %s\n", drvdesc);
@@ -93,6 +94,38 @@ fprintf(file,"}\n");
     fprintf(file,"src_dir: src\n");
     fprintf(file,"implements:\n");
     fprintf(file,"\t-misc_storage\n");
+    fclose(file);
+
+    //create the linker.ld file
+    char linker[256];
+    strcpy(linker, directory);
+    strcat(linker, "/linker.ld");
+    file = fopen(linker, "w+");
+    if(file == NULL) {
+        printf("Failed to create file: %s\n", linker);
+        return false;
+    }
+    fprintf(file,"MEMORY\n");
+    fprintf(file,"{\n");
+    fprintf(file,"    ROM (rx) : ORIGIN = 0x8000000, LENGTH = 0x10000\n");
+    fprintf(file,"    RAM (rw) : ORIGIN = 0x2000000, LENGTH = 0x4000\n");
+    fprintf(file,"}\n");
+    fprintf(file,"\n");
+    fprintf(file,"SECTIONS\n");
+    fprintf(file,"{\n");
+    fprintf(file,"    .text : {\n");
+    fprintf(file,"        *(.text)\n");
+    fprintf(file,"        KEEP(*(.symtab))  /* Retain the symbol table */\n");
+    fprintf(file,"    } > ROM\n");
+    fprintf(file,"\n");
+    fprintf(file,"    .data : {\n");
+    fprintf(file,"        *(.data)\n");
+    fprintf(file,"    } > RAM\n");
+    fprintf(file,"\n");
+    fprintf(file,"    .bss : {\n");
+    fprintf(file,"        *(.bss)\n");
+    fprintf(file,"    } > RAM\n");
+    fprintf(file,"}\n");
     fclose(file);
 
     return true;

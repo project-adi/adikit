@@ -6,14 +6,14 @@
 
 #define ADI_FF_MAGIC 0x4C4F4F4B20494441
 
-#define ADI_FF_SEGMENT_FLAG_EXEC      1 >> 0
-#define ADI_FF_SEGMENT_FLAG_WRITE     1 >> 1
-#define ADI_FF_SEGMENT_FLAG_READ      1 >> 2
-#define ADI_FF_SEGMENT_FLAG_INFILE    1 >> 3
-#define ADI_FF_SEGMENT_FLAG_PAGING    1 >> 4
-#define ADI_FF_SEGMENT_FLAG_META      1 >> 5
-#define ADI_FF_SEGMENT_FLAG_USERSPACE 1 >> 6
-#define ADI_FF_SEGMENT_FLAG_RESERVED  1 >> 7
+#define ADI_FF_SEGMENT_FLAG_EXEC      1 << 0
+#define ADI_FF_SEGMENT_FLAG_WRITE     1 << 1
+#define ADI_FF_SEGMENT_FLAG_READ      1 << 2
+#define ADI_FF_SEGMENT_FLAG_INFILE    1 << 3
+#define ADI_FF_SEGMENT_FLAG_PAGING    1 << 4
+#define ADI_FF_SEGMENT_FLAG_META      1 << 5
+#define ADI_FF_SEGMENT_FLAG_USERSPACE 1 << 6
+#define ADI_FF_SEGMENT_FLAG_RESERVED  1 << 7
 
 typedef struct {
     uint64_t magic_num;
