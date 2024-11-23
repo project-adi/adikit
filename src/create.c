@@ -31,49 +31,48 @@ bool create(char* directory) {
         return false;
     }
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <core.h>
-#include <metalanguages/misc/storage.h>
-
-fprintf(file,"uint32_t device_id = 0;\n");
-fprintf(file,"adi_core_t* core = NULL;\n");
-fprintf(file,"metalang_storage_t* misc_storage = NULL;\n");
-fprintf(file,"\n");
-fprintf(file,"sdev_ident_t storage_ident_callback(adi_device_t* dev) {\n");
-fprintf(file,"	return (sdev_ident_t){\n");
-fprintf(file,"		.size = sizeof(\"Hello, world!\"),\n");
-fprintf(file,"		.sector_size = 1,\n");
-fprintf(file,"		.read_only = true\n");
-fprintf(file,"	};\n");
-fprintf(file,"}\n");
-fprintf(file,"\n");
-fprintf(file,"uint32_t storage_transact_callback(adi_device_t* dev,bool write,uint32_t offset,uint32_t count,void* buffer){\n");
-fprintf(file,"\n");
-fprintf(file,"	if(write)\n");
-fprintf(file,"		return 0;\n");
-fprintf(file,"	if (offset + count > sizeof(\"Hello, world!\"))\n");
-fprintf(file,"		return 0;\n");
-fprintf(file,"\n");
-fprintf(file,"	char* hw = \"Hello, world!\";\n");
-fprintf(file,"\n");
-fprintf(file,"	core->memcpy(buffer, hw + offset,count);\n");
-fprintf(file,"\n");
-fprintf(file,"	// recieving the transaction_done event before the storage_transact call finishing is a perfectly normal scenario\n");
-fprintf(file,"	// and programs should account for it\n");
-fprintf(file,"	misc_storage->signal_transaction_done(dev->metalangs_implemented[0]->params,1);\n");
-fprintf(file,"\n");
-fprintf(file,"	return 1;\n");
-fprintf(file,"}\n");
-fprintf(file,"\n");
-fprintf(file,"int _start(adi_core_t* core) {\n");
-fprintf(file,"	core = core;\n");
-fprintf(file,"	misc_storage = core->misc_storage;\n");
-fprintf(file,"	metalanguage_t langs[] = {misc_storage->init(storage_ident_callback,storage_transact_callback)};\n");
-fprintf(file,"	device_id = core->register_device(langs,1);\n");
-fprintf(file,"	core->exit(true);\n");
-fprintf(file,"	return 0;\n");
-fprintf(file,"}\n");
+    fprintf(file,"#include <stdint.h>\n");
+    fprintf(file,"#include <stdbool.h>\n");
+    fprintf(file,"#include <core.h>\n");
+    fprintf(file,"#include <metalanguages/misc/storage.h>\n");
+    fprintf(file,"uint32_t device_id = 0;\n");
+    fprintf(file,"adi_core_t* core = NULL;\n");
+    fprintf(file,"metalang_storage_t* misc_storage = NULL;\n");
+    fprintf(file,"\n");
+    fprintf(file,"sdev_ident_t storage_ident_callback(adi_device_t* dev) {\n");
+    fprintf(file,"	return (sdev_ident_t){\n");
+    fprintf(file,"		.size = sizeof(\"Hello, world!\"),\n");
+    fprintf(file,"		.sector_size = 1,\n");
+    fprintf(file,"		.read_only = true\n");
+    fprintf(file,"	};\n");
+    fprintf(file,"}\n");
+    fprintf(file,"\n");
+    fprintf(file,"uint32_t storage_transact_callback(adi_device_t* dev,bool write,uint32_t offset,uint32_t count,void* buffer){\n");
+    fprintf(file,"\n");
+    fprintf(file,"	if(write)\n");
+    fprintf(file,"		return 0;\n");
+    fprintf(file,"	if (offset + count > sizeof(\"Hello, world!\"))\n");
+    fprintf(file,"		return 0;\n");
+    fprintf(file,"\n");
+    fprintf(file,"	char* hw = \"Hello, world!\";\n");
+    fprintf(file,"\n");
+    fprintf(file,"	core->memcpy(buffer, hw + offset,count);\n");
+    fprintf(file,"\n");
+    fprintf(file,"	// recieving the transaction_done event before the storage_transact call finishing is a perfectly normal scenario\n");
+    fprintf(file,"	// and programs should account for it\n");
+    fprintf(file,"	misc_storage->signal_transaction_done(dev->metalangs_implemented[0]->params,1);\n");
+    fprintf(file,"\n");
+    fprintf(file,"	return 1;\n");
+    fprintf(file,"}\n");
+    fprintf(file,"\n");
+    fprintf(file,"int _start(adi_core_t* core) {\n");
+    fprintf(file,"	core = core;\n");
+    fprintf(file,"	misc_storage = core->misc_storage;\n");
+    fprintf(file,"	metalanguage_t langs[] = {misc_storage->init(storage_ident_callback,storage_transact_callback)};\n");
+    fprintf(file,"	device_id = core->register_device(langs,1);\n");
+    fprintf(file,"	core->exit(true);\n");
+    fprintf(file,"	return 0;\n");
+    fprintf(file,"}\n");
 
 
     fclose(file);
@@ -112,19 +111,42 @@ fprintf(file,"}\n");
     fprintf(file,"\n");
     fprintf(file,"SECTIONS\n");
     fprintf(file,"{\n");
+    fprintf(file,"    . = ALIGN(CONSTANT(MAXPAGESIZE));\n");
+    fprintf(file,"\n");
     fprintf(file,"    .text : {\n");
     fprintf(file,"        *(.text)\n");
     fprintf(file,"    }\n");
+    fprintf(file,"    . = ALIGN(CONSTANT(MAXPAGESIZE));\n");
     fprintf(file,"\n");
     fprintf(file,"    .data : {\n");
     fprintf(file,"        *(.data)\n");
     fprintf(file,"    }\n");
+    fprintf(file,"    . = ALIGN(CONSTANT(MAXPAGESIZE));\n");
     fprintf(file,"\n");
+    fprintf(file,"    .rodata : {\n");
+    fprintf(file,"        *(.rodata)\n");
+    fprintf(file,"    }\n");
+    fprintf(file,"\n");
+    fprintf(file,"    . = ALIGN(CONSTANT(MAXPAGESIZE));\n");
     fprintf(file,"    .bss : {\n");
     fprintf(file,"        *(.bss)\n");
     fprintf(file,"    }\n");
+    fprintf(file,"\n");
+    fprintf(file,"    /DISCARD/ : {\n");
+    fprintf(file,"        *(.comment)\n");
+    fprintf(file,"        *(.note*)\n");
+    fprintf(file,"        *(.eh_frame*)\n");
+    fprintf(file,"        *(.eh_frame_hdr)\n");
+    fprintf(file,"        *(.got)\n");
+    fprintf(file,"        *(.plt)\n");
+    fprintf(file,"        *(.dyn*)\n");
+    fprintf(file,"        *(.gnu*)\n");
+    fprintf(file,"        *(.interp)\n");
+    fprintf(file,"        *(.hash)\n");
+    fprintf(file,"        *(.rel*)\n");
+    fprintf(file,"    }\n");
     fprintf(file,"}\n");
-    fclose(file);
+
 
     return true;
 }
