@@ -25,51 +25,6 @@ uint32_t segment_table_size = 0;
 char* segment_contents = NULL;
 uint32_t segment_contents_size = 0;
 
-uintptr_t get_symbol_address(Elf* elf, char* symbol_name){
-    size_t shstrndx;
-    if (elf_getshdrstrndx(elf, &shstrndx) != 0) {
-        fprintf(stderr, "ERROR: elf_getshdrstrndx failed: %s\n", elf_errmsg(-1));
-        return 0;
-    }
-
-    // Iterate through segments to find the symbol table
-    Elf_Scn *scn = NULL;
-    while ((scn = elf_nextscn(elf, scn)) != NULL) {
-        GElf_Shdr shdr;
-        if (gelf_getshdr(scn, &shdr) != &shdr) {
-            fprintf(stderr, "gelf_getshdr failed: %s\n", elf_errmsg(-1));
-            continue;
-        }
-
-        // Check if the segment is a symbol table
-        if (shdr.sh_type == SHT_SYMTAB || shdr.sh_type == SHT_DYNSYM) {
-            Elf_Data *data = elf_getdata(scn, NULL);
-            if (!data) {
-                fprintf(stderr, "elf_getdata failed: %s\n", elf_errmsg(-1));
-                continue;
-            }
-
-            // Iterate through symbols
-            size_t num_symbols = shdr.sh_size / shdr.sh_entsize;
-            for (size_t i = 0; i < num_symbols; ++i) {
-                GElf_Sym sym;
-                if (gelf_getsym(data, i, &sym) != &sym) {
-                    fprintf(stderr, "gelf_getsym failed: %s\n", elf_errmsg(-1));
-                    continue;
-                }
-
-                const char *name = elf_strptr(elf, shdr.sh_link, sym.st_name);
-                if (name && strcmp(name, symbol_name) == 0) {
-                    return (uintptr_t)sym.st_value;
-                }
-            }
-        }
-    }
-
-    printf("Symbol '%s' not found.\n", symbol_name);
-    return 0;
-}
-
 bool prepare_string_table(){
     //TODO: use the string table for more
     string_table_size = strlen(name) + strlen(author) + 2;
@@ -89,7 +44,6 @@ bool prepare_string_table(){
 bool append_metalang(Elf* elf, char* metalang){
     adi_ff_metalang_t mlang = (adi_ff_metalang_t){
         .id = htole32(get_metalang_id(metalang)),
-        .pointer_addr = htole64(get_symbol_address(elf, metalang)),
     };
     metalang_table_size += sizeof(mlang);
     metalang_table = (char*)realloc(metalang_table, metalang_table_size);
@@ -97,7 +51,6 @@ bool append_metalang(Elf* elf, char* metalang){
         printf("ERROR: Failed to allocate memory\n");
         return false;
     }
-
 
     memcpy(metalang_table + metalang_table_size - sizeof(mlang), &mlang, sizeof(mlang));
 
@@ -274,7 +227,6 @@ bool convert(char* driver_elf)
     header.ver_minor = ver_minor;
     header.ver_patch = ver_patch;
 
-    header.cfr_addr = htole64(get_symbol_address(elf, "core"));
     header.spec_version = htole16(adi_version);
 
     if(gelf_getclass(elf) == ELFCLASS64) {

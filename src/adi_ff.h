@@ -31,7 +31,6 @@ typedef struct {
     uint32_t segment_table_offset;
     uint32_t segment_table_size; 
     uint32_t content_region_offset;
-    uint64_t cfr_addr;
 } __attribute__((packed)) adi_ff_header_t;
 
 typedef struct {
@@ -44,7 +43,6 @@ typedef struct {
 
 typedef struct {
     uint32_t id;
-    uint64_t pointer_addr;
 } __attribute__((packed)) adi_ff_metalang_t;
 
 #endif // __ADI_FF_H__
