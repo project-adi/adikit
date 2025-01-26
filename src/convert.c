@@ -133,13 +133,16 @@ bool append_segment(Elf* elf, Elf_Scn* scn,size_t shstrndx){
     if(data->d_buf != NULL){
         seg.segment_offset = htole32(segment_contents_size);
 
-        segment_contents_size += shdr.sh_size;
+        uint64_t fixed_size = ((shdr.sh_size / 4096) + 1) * 4096;
+
+        segment_contents_size += fixed_size;
         segment_contents = (char*)realloc(segment_contents, segment_contents_size);
         if(segment_contents == NULL){
             printf("ERROR: Failed to allocate memory\n");
             return false;
         }
-        memcpy(segment_contents + segment_contents_size - shdr.sh_size, data->d_buf, shdr.sh_size);
+        memset(segment_contents + segment_contents_size - fixed_size, 0, fixed_size);
+        memcpy(segment_contents + segment_contents_size - fixed_size, data->d_buf, shdr.sh_size);
     }
 
     segment_table_size += sizeof(seg);

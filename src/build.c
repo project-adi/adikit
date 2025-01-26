@@ -87,7 +87,7 @@ bool compile(char* path) {
     strcat(command, libadi_path);
     strcat(command, " -target ");
     strcat(command, cross_arch);
-    strcat(command, " -c ");
+    strcat(command, " -g -c ");
     strcat(command, path);
     strcat(command, " -o ");
     strcat(command, bin_path);
