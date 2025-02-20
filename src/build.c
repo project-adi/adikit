@@ -83,7 +83,8 @@ bool compile(char* path) {
 
     char command[1024];
     strcpy(command, "clang");
-    strcat(command, " -I");
+    strcat(command, " -ffreestanding ");
+    strcat(command, " -I ");
     strcat(command, libadi_path);
     strcat(command, " -target ");
     strcat(command, cross_arch);
@@ -91,6 +92,8 @@ bool compile(char* path) {
     strcat(command, path);
     strcat(command, " -o ");
     strcat(command, bin_path);
+
+    printf("%s\n", command);
 
     return (system(command) == 0);
 }

@@ -15,14 +15,13 @@
 
 char actio = 0;
 
-void usage(int errcode) {
-    printf("Usage: main <action>\n");
+void usage(int errcode, char* exec_name) {
     switch(errcode) {
         case US_CODE_NO_ACTIO:
-            printf("ERROR: No action specified\n");
+            printf("\e[1;31merror\e[0m: No action specified\n       Usage: %s <action>\n", exec_name);
             break;
         case US_CODE_BAD_ACTIO:
-            printf("ERROR: Bad action specified\n");
+            printf("\e[1;31merror\e[0m: Bad action specified\n       Usage: %s <action>\n", exec_name);
             break;
     }
     exit(0);
@@ -31,13 +30,13 @@ void usage(int errcode) {
 bool parse_args(int argc, char **argv) {
     char* astr = argv[1];
     if(astr == NULL) {
-        usage(US_CODE_NO_ACTIO);
-    }else if(strcmp(astr, "create") == 0) {
+        usage(US_CODE_NO_ACTIO, argv[0]);
+    } else if(strcmp(astr, "create") == 0) {
         actio = ACTION_CREATE;
-    }else if (strcmp(astr, "build") == 0) {
+    } else if (strcmp(astr, "build") == 0) {
         actio = ACTION_COMPILE;
-    }else {
-        usage(US_CODE_BAD_ACTIO);
+    } else {
+        usage(US_CODE_BAD_ACTIO, argv[0]);
     } 
 
     return true;
@@ -45,13 +44,13 @@ bool parse_args(int argc, char **argv) {
 
 int main(int argc, char **argv) {
     if(!parse_args(argc, argv)) {
-        printf("Failed to parse arguments\n");
+        printf("\e[1;31merror\e[0m: Couldn't parse arguments\n");
         return 1;
     }
 
     switch (actio) {
         case ACTION_CREATE:
-            create(argv[2]);
+            create();
             break;
         case ACTION_COMPILE:
             build(argv[2]);
