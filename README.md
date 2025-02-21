@@ -16,7 +16,7 @@ To Install ADIKit you need the following dependencies:
 To get started first download the project from Github:
 
 ```bash
-git clone --recursive https://github.com/project-adi/adikit
+git clone --recursive https://github.com/project-adi/adikit.git
 ```
 
 After that to build and install it run
