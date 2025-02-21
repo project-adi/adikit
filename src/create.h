@@ -3,6 +3,6 @@
 
 #include <stdbool.h>
 
-bool create(char* directory);
+bool create();
 
 #endif // __CREATE_H__

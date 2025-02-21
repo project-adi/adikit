@@ -33,7 +33,7 @@ bool prepare_string_table(){
     strcpy(string_table, name);
     string_table[strlen(name)] = '\0';
     strcpy(string_table + strlen(name) + 1, author);
-    string_table[string_table_size] = '\0';
+    string_table[string_table_size - 1] = '\0';
 
     header.name_offset = 0;
     header.author_offset = htole16(strlen(name) + 1);
@@ -48,7 +48,7 @@ bool append_metalang(Elf* elf, char* metalang){
     metalang_table_size += sizeof(mlang);
     metalang_table = (char*)realloc(metalang_table, metalang_table_size);
     if(metalang_table == NULL){
-        printf("ERROR: Failed to allocate memory\n");
+        printf("\e[1;31merror\e[0m: Failed to allocate memory\n");
         return false;
     }
 
@@ -88,7 +88,7 @@ bool append_segment(Elf* elf, Elf_Scn* scn,size_t shstrndx){
     string_table_size += strlen(name) + 1;
     string_table = (char*)realloc(string_table, string_table_size);
     if(string_table == NULL){
-        printf("ERROR: Failed to allocate memory\n");
+        printf("\e[1;31merror\e[0m: Failed to allocate memory\n");
         return false;
     }
     strcpy(string_table + string_table_size - strlen(name) - 1, name);
@@ -138,7 +138,7 @@ bool append_segment(Elf* elf, Elf_Scn* scn,size_t shstrndx){
         segment_contents_size += fixed_size;
         segment_contents = (char*)realloc(segment_contents, segment_contents_size);
         if(segment_contents == NULL){
-            printf("ERROR: Failed to allocate memory\n");
+            printf("\e[1;31merror\e[0m: Failed to allocate memory\n");
             return false;
         }
         memset(segment_contents + segment_contents_size - fixed_size, 0, fixed_size);
@@ -148,7 +148,7 @@ bool append_segment(Elf* elf, Elf_Scn* scn,size_t shstrndx){
     segment_table_size += sizeof(seg);
     segment_table = (char*)realloc(segment_table, segment_table_size);
     if(segment_table == NULL){
-        printf("ERROR: Failed to allocate memory\n");
+        printf("\e[1;31merror\e[0m: Failed to allocate memory\n");
         return false;
     }
     memcpy(segment_table + segment_table_size - sizeof(seg), &seg, sizeof(seg));
@@ -201,12 +201,12 @@ bool convert(char* driver_elf)
 
     FILE* driver_elf_file = fopen(driver_elf, "r");
     if (driver_elf_file == NULL) {
-        printf("ERROR: Failed to open driver ELF file\n");
+        printf("\e[1;31merror\e[0m: Failed to open driver ELF file\n");
         goto error;
     }
     char* driver_adi = strdup(driver_elf); 
     if (driver_adi == NULL) {
-        printf("ERROR: Failed to allocate memory\n");
+        printf("\e[1;31merror\e[0m: Failed to allocate memory\n");
         goto error;
     }
     driver_adi[strlen(driver_adi) - 3] = '\0';
@@ -214,13 +214,13 @@ bool convert(char* driver_elf)
 
     FILE* driver_adi_file = fopen(driver_adi, "w+");
     if (driver_adi_file == NULL) {
-        printf("ERROR: Failed to create driver ADI file\n");
+        printf("\e[1;31merror\e[0m: Failed to create driver ADI file\n");
         goto error;
     }
 
     Elf *elf = elf_begin(fileno(driver_elf_file), ELF_C_READ, NULL);
     if (elf == NULL) {
-        printf("ERROR: Failed to parse ELF file\n");
+        printf("\e[1;31merror\e[0m: Failed to parse ELF file\n");
         return false;
     }
 
@@ -239,7 +239,7 @@ bool convert(char* driver_elf)
         }
         header.entry_point = htole64(ehdr->e_entry);
     }else {
-        printf("ERROR: ELF class not supported(no 32-bit support rn)\n");
+        printf("\e[1;31merror\e[0m: ELF class not supported(no 32-bit support rn)\n");
         goto error;
     }
 
@@ -275,6 +275,10 @@ bool convert(char* driver_elf)
     fclose(driver_elf_file);
     fclose(driver_adi_file);
     free(driver_adi);
+    free(metalang_table);
+    free(segment_table);
+    free(segment_contents);
+    free(string_table);
 
     return result;
     error:
