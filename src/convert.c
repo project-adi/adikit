@@ -48,7 +48,7 @@ bool append_metalang(Elf* elf, char* metalang){
     metalang_table_size += sizeof(mlang);
     metalang_table = (char*)realloc(metalang_table, metalang_table_size);
     if(metalang_table == NULL){
-        printf("\e[1;31merror\e[0m:1merror\e[0m: Failed to allocate memory\n");
+        printf("\e[1;31merror\e[0m: Failed to allocate memory\n");
         return false;
     }
 
@@ -88,7 +88,7 @@ bool append_segment(Elf* elf, Elf_Scn* scn,size_t shstrndx){
     string_table_size += strlen(name) + 1;
     string_table = (char*)realloc(string_table, string_table_size);
     if(string_table == NULL){
-        printf("\e[1;31merror\e[0m:1merror\e[0m: Failed to allocate memory\n");
+        printf("\e[1;31merror\e[0m: Failed to allocate memory\n");
         return false;
     }
     strcpy(string_table + string_table_size - strlen(name) - 1, name);
@@ -275,6 +275,10 @@ bool convert(char* driver_elf)
     fclose(driver_elf_file);
     fclose(driver_adi_file);
     free(driver_adi);
+    free(metalang_table);
+    free(segment_table);
+    free(segment_contents);
+    free(string_table);
 
     return result;
     error:

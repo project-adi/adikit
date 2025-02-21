@@ -18,6 +18,21 @@ uint8_t src_files_counter = 0;
 char** obj_files;
 uint8_t obj_files_counter = 0;
 
+void free_src_files() {
+    for (uint8_t i = 0; i < src_files_counter; i++) {
+        free(src_files[i]);
+    }
+    free(src_files);
+}
+
+// Free memory allocated by strdup for obj_files
+void free_obj_files() {
+    for (uint8_t i = 0; i < obj_files_counter; i++) {
+        free(obj_files[i]);
+    }
+    free(obj_files);
+}
+
 bool explore_dir(char* dirname) {
     DIR* dir = opendir( dirname);
     if (dir == NULL) {
@@ -101,7 +116,7 @@ bool compile(const char* path) {
         compiler = "cc";
     }
 
-    char comp_specifc_arg_string[1024] = {0};
+    char *comp_specifc_arg_string = malloc(1024);
 
     if (strstr(compiler, "clang") != NULL) {
         snprintf(comp_specifc_arg_string, 1024, "-target %s", cross_arch);
@@ -120,6 +135,8 @@ bool compile(const char* path) {
 
     int result = system(command);
     free(command);
+    free(comp_specifc_arg_string);
+
     return result == 0;
 }
 
@@ -262,11 +279,17 @@ bool build(char* directory) {
     }
     free(metalangs_used);
 
+    free_obj_files();
+    free_src_files();
+
     return result;
 
     error:
 
     result = false;
+
+    free_obj_files();
+    free_src_files();
 
     goto finish;
 }
