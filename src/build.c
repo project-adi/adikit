@@ -61,39 +61,66 @@ bool explore_dir(char* dirname) {
     return true;
 }
 
-bool compile(char* path) {
-
-    // get enviroment variable "LIBADI_PATH"
-    char* libadi_path = getenv("LIBADI_PATH");
-    if (libadi_path == NULL) {
-        printf("\e[1;31merror\e[0m: LIBADI_PATH is not set\n");
+bool compile(const char* path) {
+    const char* libadi_path = getenv("LIBADI_PATH");
+    if (!libadi_path) {
+        fprintf(stderr, "\e[1;31merror\e[0m: LIBADI_PATH environment variable is not set\n");
         return false;
     }
 
-    //WARNING: this is hacky and WILL ONLY WORK if PATH LOOKS LIKE "dir/src_dir..."
+    char* first_slash = strchr(path, '/');
+    if (!first_slash) {
+        fprintf(stderr, "\e[1;31merror\e[0m: Invalid path format: %s\n", path);
+        return false;
+    }
+
     char bin_path[1024];
-    strcpy(bin_path, path);
-    strcpy(strchr(bin_path, '/') + 1, "bin");
-    strcat(bin_path, strchr(strchr(path, '/') + 1, '/'));
-    strcat(bin_path, ".o");
+    const char *bin_dir = "bin/";
+    const char *filename = strrchr(path, '/');
+    
+    if (filename) {
+        filename++;
+    } else {
+        filename = path;
+    }
+    
+    snprintf(bin_path, sizeof(bin_path), "%s%s.o", bin_dir, filename);
+    
 
-    obj_files = (char**)realloc(obj_files, sizeof(char*) * (obj_files_counter + 1));
-    obj_files[obj_files_counter] = strdup(bin_path);
-    obj_files_counter++;
+    char** temp = realloc(obj_files, sizeof(char*) * (obj_files_counter + 1));
+    if (!temp) {
+        fprintf(stderr, "\e[1;31merror\e[0m: Memory allocation failed\n");
+        return false;
+    }
+    obj_files = temp;
+    obj_files[obj_files_counter++] = strdup(bin_path);
 
-    char command[1024];
-    strcpy(command, "clang");
-    strcat(command, " -ffreestanding ");
-    strcat(command, " -I ");
-    strcat(command, libadi_path);
-    strcat(command, " -target ");
-    strcat(command, cross_arch);
-    strcat(command, " -g -c ");
-    strcat(command, path);
-    strcat(command, " -o ");
-    strcat(command, bin_path);
+    const char* compiler = getenv("ADIKIT_CC");
+    if (!compiler) {
+        printf("\e[1;33mwarning\e[0m: ADIKIT_CC environment variable is not set, using /bin/cc\n");
+        compiler = "cc";
+    }
 
-    return (system(command) == 0);
+    char comp_specifc_arg_string[1024] = {0};
+
+    if (strstr(compiler, "clang") != NULL) {
+        snprintf(comp_specifc_arg_string, 1024, "-target %s", cross_arch);
+    } else {
+        strcpy(comp_specifc_arg_string, "    ");
+    }
+
+    char* command = malloc(strlen(compiler) + strlen(libadi_path) + strlen(path) + strlen(bin_path) + 64);
+
+    if (!command) {
+        fprintf(stderr, "\e[1;31merror\e[0m: Memory allocation failed\n");
+        return false;
+    }
+
+    sprintf(command, "%s -ffreestanding -I %s -g -c %s -o %s %s", compiler, libadi_path, path, bin_path, comp_specifc_arg_string);
+
+    int result = system(command);
+    free(command);
+    return result == 0;
 }
 
 bool build(char* directory) {
@@ -145,9 +172,8 @@ bool build(char* directory) {
     strcat(newsrcdir, "/");
     strcat(newsrcdir, src_dir);
 
-    src_files = (char**)malloc(sizeof(char*));
+    src_files = (char**)malloc(sizeof(char*) * src_files_counter);
     explore_dir(newsrcdir);
-    src_files[src_files_counter] = NULL;
 
 
     char bindir[1024];
@@ -161,9 +187,9 @@ bool build(char* directory) {
         }
     }
 
-    obj_files = (char**)malloc(sizeof(char*));
+    obj_files = (char**)malloc(sizeof(char*) * obj_files_counter);
 
-    for(uint8_t i = 0; src_files[i]; i++) {
+    for(uint8_t i = 0; i < src_files_counter; i++) {
         printf("Compiling: %s\n", src_files[i]);
         if(!compile(src_files[i])) {
             printf("\e[1;31merror\e[0m: Failed to compile: %s\n", src_files[i]);
@@ -171,13 +197,11 @@ bool build(char* directory) {
         }
     }
 
-    obj_files[obj_files_counter] = NULL;
-
     printf("Linking driver.elf\n");
 
     char link_cmd[2048];
     strcpy(link_cmd, "ld ");
-    for(uint8_t i = 0; obj_files[i]; i++) {
+    for(uint8_t i = 0; i < obj_files_counter; i++) {
         strcat(link_cmd, obj_files[i]);
         strcat(link_cmd, " ");
     }

@@ -66,7 +66,7 @@ bool parse_config(char* drvdesc) {
                 }
             }
         } else if (strncmp("require_kernel: ", line, 16) == 0) {
-            if (strcmp(line + 16, "true") == 0) {
+            if (strcmp(line + 16, "true") == 0) {   
                 require_kernel = true;
             } else if (strcmp(line + 16, "false") == 0) {
                 require_kernel = false;
@@ -76,12 +76,12 @@ bool parse_config(char* drvdesc) {
         } else if (strncmp("version: ", line, 9) == 0) {
             char* verstr = strchr(line + 9, 'v') + 1;
             if (verstr == NULL) {
-                printf("ERROR: Failed to parse version string\n");
+                printf("\e[1;31merror\e[0m: Failed to parse version string\n");
                 return false;
             }
 
             if (sscanf(verstr, "%hhu.%hhu.%hhu", &ver_major, &ver_minor, &ver_patch) != 3) {
-                printf("ERROR: Failed to parse version string\n");
+                printf("\e[1;31merror\e[0m: Failed to parse version string\n");
                 return false;
             }
         } else if (strncmp("implements: ", line, 11) == 0) {
@@ -110,12 +110,18 @@ bool parse_config(char* drvdesc) {
     }
 
     if (name == NULL || author == NULL || src_dir == NULL) {
-        printf("ERROR: Mandatory fields(name, author, src_dir) not present\n");
+        printf("\e[1;31merror\e[0m: Mandatory fields(name, author, src_dir) not present\n");
         return false;
     }
 
     if (cross_arch == NULL) {
         cross_arch = strdup("x86_64-pc-none-elf");
+    } else {
+        if (strcmp(cross_arch, "x86") == 0) {
+            cross_arch = strdup("x86_64-pc-none-elf");
+        } else if (strcmp(cross_arch, "arm") == 0) {
+            cross_arch = strdup("arm-none-eabi");
+        }
     }
 
     if(impl_counter == 0) {
