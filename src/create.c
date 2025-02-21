@@ -18,7 +18,7 @@ bool create() {
     char *directory = malloc(256);
 
     if (!driver_name || !author || !directory) {
-        fprintf(stderr, "Memory allocation failed\n");
+        printf("\e[1;31merror\e[0m: Memory allocation failed\n");
         free(driver_name);
         free(author);
         free(directory);
@@ -88,7 +88,7 @@ bool create() {
     sprintf(main_path, "%s/main.c", src_path);
     FILE* file = fopen(main_path, "w+");
     if (!file) {
-        printf("Failed to create file: %s\n", main_path);
+        printf("\e[1;31merror\e[0m: Failed to create file: %s\n", main_path);
         free(src_path);
         free(main_path);
         free(driver_name);
@@ -143,7 +143,7 @@ bool create() {
     sprintf(drvdesc_path, "%s/.drvdesc", directory);
     file = fopen(drvdesc_path, "w+");
     if (!file) {
-        printf("Failed to create file: %s\n", drvdesc_path);
+        printf("\e[1;31merror\e[0m: Failed to create file: %s\n", drvdesc_path);
         free(src_path);
         free(main_path);
         free(drvdesc_path);
