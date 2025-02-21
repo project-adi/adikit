@@ -21,7 +21,7 @@ uint8_t obj_files_counter = 0;
 bool explore_dir(char* dirname) {
     DIR* dir = opendir( dirname);
     if (dir == NULL) {
-        printf("ERROR: Failed to open source directory\n");
+        printf("\e[1;31merror\e[0m: Failed to open source directory\n");
         return false;
     }
 
@@ -66,7 +66,7 @@ bool compile(char* path) {
     // get enviroment variable "LIBADI_PATH"
     char* libadi_path = getenv("LIBADI_PATH");
     if (libadi_path == NULL) {
-        printf("ERROR: LIBADI_PATH is not set\n");
+        printf("\e[1;31merror\e[0m: LIBADI_PATH is not set\n");
         return false;
     }
 
@@ -83,7 +83,8 @@ bool compile(char* path) {
 
     char command[1024];
     strcpy(command, "clang");
-    strcat(command, " -I");
+    strcat(command, " -ffreestanding ");
+    strcat(command, " -I ");
     strcat(command, libadi_path);
     strcat(command, " -target ");
     strcat(command, cross_arch);
@@ -102,7 +103,7 @@ bool build(char* directory) {
     }
 
     if (access(directory, F_OK) != 0) {
-        printf("ERROR: Failed to find directory\n");
+        printf("\e[1;31merror\e[0m: Failed to find directory\n");
         return false;
     }
     char drvdesc[1024];
@@ -110,7 +111,7 @@ bool build(char* directory) {
     strcat(drvdesc, "/.drvdesc");
     FILE* file = fopen(drvdesc, "r");
     if (file == NULL) {
-        printf("ERROR: Failed to open .drvdesc file\n");
+        printf("\e[1;31merror\e[0m: Failed to open .drvdesc file\n");
         goto error;
     }
 
@@ -119,7 +120,7 @@ bool build(char* directory) {
     rewind(file);
     char* buffer = malloc(size + 1);
     if (buffer == NULL) {
-        printf("ERROR: Failed to allocate memory\n");
+        printf("\e[1;31merror\e[0m: Failed to allocate memory\n");
         goto error;
     }
     fread(buffer, 1, size, file);
@@ -134,7 +135,7 @@ bool build(char* directory) {
     }
 
     if (access(src_dir, F_OK) != 0) {
-        printf("ERROR: Failed to find source directory\n");
+        printf("\e[1;31merror\e[0m: Failed to find source directory\n");
         goto error;
     }
 
@@ -155,7 +156,7 @@ bool build(char* directory) {
 
     if(access(bindir, F_OK) != 0) {
         if(mkdir(bindir, 0777) != 0) {
-            printf("ERROR: Failed to create bin directory\n");
+            printf("\e[1;31merror\e[0m: Failed to create bin directory\n");
             goto error;
         }
     }
@@ -165,7 +166,7 @@ bool build(char* directory) {
     for(uint8_t i = 0; src_files[i]; i++) {
         printf("Compiling: %s\n", src_files[i]);
         if(!compile(src_files[i])) {
-            printf("ERROR: Failed to compile: %s\n", src_files[i]);
+            printf("\e[1;31merror\e[0m: Failed to compile: %s\n", src_files[i]);
             goto error;
         }
     }
@@ -189,7 +190,7 @@ bool build(char* directory) {
     strcat(link_cmd, "/driver.elf");
 
     if(system(link_cmd) != 0) {
-        printf( "ERROR: Failed to link\n");
+        printf( "\e[1;31merror\e[0m: Failed to link\n");
         goto error;
     }
 
@@ -198,7 +199,7 @@ bool build(char* directory) {
     strcat(driver_elf, "/driver.elf");
 
     if(!convert(driver_elf)) {
-        printf("ERROR: Failed to convert driver.elf\n");
+        printf("\e[1;31merror\e[0m: Failed to convert driver.elf\n");
         goto error;
     }
 
@@ -212,13 +213,13 @@ bool build(char* directory) {
 
     if(access(output_adi, F_OK) == 0) {
         if(remove(output_adi) != 0) {
-            printf("ERROR: Failed to remove output.adi\n");
+            printf("\e[1;31merror\e[0m: Failed to remove output.adi\n");
             goto error;
         }
     }
 
     if(rename(driver_elf, output_adi) != 0) {
-        printf("ERROR: Failed to rename driver.adi to output.adi\n");
+        printf("\e[1;31merror\e[0m: Failed to rename driver.adi to output.adi\n");
         goto error;
     }
 
