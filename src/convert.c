@@ -193,6 +193,11 @@ bool prepare_segment_table(Elf* elf){
 
 bool convert(char* driver_elf)
 {
+    if (!driver_elf) {
+        printf("\e[1;31merror\e[0m: Invalid driver ELF file\n");
+        goto error;
+    }
+
     bool result = true;
     if (elf_version(EV_CURRENT) == EV_NONE) {
         fprintf(stderr, "ELF library initialization failed: %s\n", elf_errmsg(-1));
@@ -204,11 +209,13 @@ bool convert(char* driver_elf)
         printf("\e[1;31merror\e[0m: Failed to open driver ELF file\n");
         goto error;
     }
-    char* driver_adi = strdup(driver_elf); 
+
+    char* driver_adi = malloc(strlen(driver_elf) + 1); 
     if (driver_adi == NULL) {
         printf("\e[1;31merror\e[0m: Failed to allocate memory\n");
         goto error;
     }
+    strcpy(driver_adi, driver_elf);
     driver_adi[strlen(driver_adi) - 3] = '\0';
     strcat(driver_adi, "adi");
 

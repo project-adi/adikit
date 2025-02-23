@@ -123,12 +123,12 @@ bool compile(const char* path) {
     char *comp_specifc_arg_string = malloc(1024);
 
     if (strstr(compiler, "clang") != NULL) {
-        snprintf(comp_specifc_arg_string, 1024, "-target %s", cross_arch);
+        snprintf(comp_specifc_arg_string, 1025, "-target %s", cross_arch);
     } else {
         strcpy(comp_specifc_arg_string, "    ");
     }
 
-    char* command = malloc(strlen(compiler) + strlen(libadi_path) + strlen(path) + strlen(bin_path) + 64);
+    char* command = malloc(2048);
 
     if (!command) {
         fprintf(stderr, "\e[1;31merror\e[0m: Memory allocation failed\n");
