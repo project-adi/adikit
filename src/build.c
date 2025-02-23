@@ -79,8 +79,12 @@ bool explore_dir(char* dirname) {
 bool compile(const char* path) {
     const char* libadi_path = getenv("LIBADI_PATH");
     if (!libadi_path) {
-        fprintf(stderr, "\e[1;31merror\e[0m: LIBADI_PATH environment variable is not set\n");
-        return false;
+        if(access("/usr/local/include/libadi", F_OK) == 0) {
+            libadi_path = "/usr/local/include/libadi";
+        } else {
+            fprintf(stderr, "\e[1;31merror\e[0m: LIBADI_PATH environment variable is not set\n");
+            return false;
+        }
     }
 
     char* first_slash = strchr(path, '/');
@@ -131,7 +135,7 @@ bool compile(const char* path) {
         return false;
     }
 
-    sprintf(command, "%s -ffreestanding -I %s -g -c %s -o %s %s", compiler, libadi_path, path, bin_path, comp_specifc_arg_string);
+    sprintf(command, "%s -ffreestanding -nostdlib -fno-builtin -fno-stack-protector -I%s -g -c %s -o %s %s", compiler, libadi_path, path, bin_path, comp_specifc_arg_string);
 
     int result = system(command);
     free(command);
@@ -275,8 +279,6 @@ bool build(char* directory) {
         free(metalangs_implemented[i]);
     }
     free(metalangs_implemented);
-    for(uint8_t i = 0; metalangs_used[i]; i++) {
-    }
     free(metalangs_used);
 
     free_obj_files();
@@ -288,8 +290,6 @@ bool build(char* directory) {
 
     result = false;
 
-    free_obj_files();
-    free_src_files();
 
     goto finish;
 }

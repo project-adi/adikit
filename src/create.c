@@ -121,13 +121,13 @@ bool create() {
         "\treturn 1;\n"
         "}\n\n"
         "int _start() {\n"
-        "\tmetalanguage_t langs[] = {misc_storage->new(storage_ident_callback, storage_transact_callback)};\n"
+        "\tmetalanguage_t langs[] = {misc_storage->init(storage_ident_callback, storage_transact_callback)};\n"
         "\tdevice_id = core->register_device(langs, 1);\n"
         "\treturn 0;\n"
         "}\n"
     );
     fclose(file);
-    
+
     // Create the .drvdesc file path
     char* drvdesc_path = malloc(dir_len + 10); // "/.drvdesc" + null terminator
     if (!drvdesc_path) {
