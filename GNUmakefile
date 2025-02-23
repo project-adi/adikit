@@ -26,7 +26,7 @@ install: all
 	mkdir -p $(INSTALL_DIR)
 	install -m 755 $(BIN_DIR)/adikit $(INSTALL_DIR)
 
-ifeq ($(wildcard libadi),"")
+ifeq ($(wildcard libadi),)
 	git clone $(LIBADI_URL)
 endif
 	chmod -R a+rw libadi
